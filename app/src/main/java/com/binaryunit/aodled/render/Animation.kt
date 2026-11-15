@@ -12,6 +12,7 @@ const val FRAME_MS = 1000L / ANIM_FPS
 const val PULSE_PERIOD_MS = 4000L
 const val PULSE_DARK_MS = 600L
 const val ROTATE_PERIOD_MS = 2000L
+const val CHARGE_MS = 3000L
 const val GLOW_FACTOR = 3f
 const val GLOW_MIN = 4f
 const val GLOW_MAX = 24f

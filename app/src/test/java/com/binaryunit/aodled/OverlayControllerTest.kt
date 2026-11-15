@@ -1,6 +1,7 @@
 package com.binaryunit.aodled
 
 import com.binaryunit.aodled.config.Offset
+import com.binaryunit.aodled.render.CHARGE_MS
 import com.binaryunit.aodled.service.LINGER_MS
 import com.binaryunit.aodled.service.Light
 import com.binaryunit.aodled.service.OverlayController
@@ -90,6 +91,16 @@ class OverlayControllerTest {
         c.screen(false); c.screen(true); clock.advance(50); c.screen(false); clock.advance(1000)
         assertFalse("down" in host.events)
         assertEquals(1, host.events.count { it == "up" })
+    }
+
+    @Test fun `charged redraws now and again when the burst ends`() {
+        host.light = Light.STILL; c.screen(false)
+        c.charged()
+        assertEquals(2, draws().size)
+        clock.advance(CHARGE_MS - 1)
+        assertEquals(2, draws().size)
+        clock.advance(1)
+        assertEquals(3, draws().size)
     }
 
     @Test fun `refresh while the cover is down draws nothing`() {

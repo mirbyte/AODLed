@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.PixelFormat
 import android.hardware.display.DisplayManager
+import android.os.BatteryManager
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
@@ -26,6 +27,7 @@ import com.binaryunit.aodled.config.defaultCutout
 import com.binaryunit.aodled.config.defaultDot
 import com.binaryunit.aodled.config.defaultRing
 import com.binaryunit.aodled.config.placementDiffers
+import com.binaryunit.aodled.render.CHARGE_MS
 import com.binaryunit.aodled.render.FRAME_MS
 import com.binaryunit.aodled.render.LightState
 import com.binaryunit.aodled.render.LightView
@@ -58,6 +60,9 @@ class OverlayService : AccessibilityService() {
     // Pulse bursts count from here (uptime): the cover going up, the display coming back from OFF, a new alert
     private var pulseStart = 0L
     private var lastAlert: Long? = null
+    // Uptime of the last charger plug-in, and the battery percentage then; the burst shows for CHARGE_MS after it
+    private var pluggedAt: Long? = null
+    private var chargeLevel: Int? = null
 
     private val displayListener = object : DisplayManager.DisplayListener {
         override fun onDisplayAdded(displayId: Int) {}
@@ -119,7 +124,7 @@ class OverlayService : AccessibilityService() {
         override fun frame(): Long {
             wake.poke(100)
             view?.invalidate()
-            if (effectiveAnimation(cfg.style, cfg.animation) != Animation.PULSE) return FRAME_MS
+            if (activeChargeStart() != null || effectiveAnimation(cfg.style, cfg.animation) != Animation.PULSE) return FRAME_MS
             // In a pause nothing is drawn, but the CPU is held awake for it: unplugged, the Pixel 10a sleeps and this
             // uptime timer with it, so the next burst never came (2026-11-04). The saving is the drawing, not the CPU.
             // To let the CPU sleep too, wake for the next burst with an exact alarm instead (USE_EXACT_ALARM is granted
@@ -151,6 +156,7 @@ class OverlayService : AccessibilityService() {
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(screenReceiver, filter, RECEIVER_EXPORTED)
         else registerReceiver(screenReceiver, filter)
         registerReceiver(tickReceiver, IntentFilter(Intent.ACTION_TIME_TICK))
+        registerReceiver(powerReceiver, IntentFilter(Intent.ACTION_POWER_CONNECTED))
         AppState.addListener(onStateChanged)
         prefs.onChange(onPrefsChanged)
         evaluate()
@@ -161,11 +167,22 @@ class OverlayService : AccessibilityService() {
         override fun onReceive(context: Context, intent: Intent) = controller.tick()
     }
 
+    private val powerReceiver = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            if (!cfg.chargeAnimation) return
+            pluggedAt = SystemClock.uptimeMillis()
+            chargeLevel = getSystemService(BatteryManager::class.java)
+                .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY).takeIf { it in 0..100 }
+            controller.charged()
+        }
+    }
+
     override fun onDestroy() {
         if (::prefs.isInitialized) {
             dm.unregisterDisplayListener(displayListener)
             unregisterReceiver(screenReceiver)
             unregisterReceiver(tickReceiver)
+            unregisterReceiver(powerReceiver)
             AppState.removeListener(onStateChanged)
             prefs.removeOnChange(onPrefsChanged)
             controller.stop()
@@ -218,6 +235,7 @@ class OverlayService : AccessibilityService() {
         wake.poke()
         v.state = state
         return when {
+            state.chargeStart != null -> Light.ANIMATED
             colour == null -> Light.OFF
             effectiveAnimation(cfg.style, cfg.animation) != Animation.OFF -> Light.ANIMATED
             else -> Light.STILL
@@ -240,6 +258,11 @@ class OverlayService : AccessibilityService() {
             cutoutPath = path,
             pulse = pulseFor(cfg),
             pulseStart = pulseStart,
+            chargeStart = activeChargeStart(),
+            chargeLevel = chargeLevel,
         )
     }
+
+    /** Uptime the charging burst began, or null once it's over. */
+    private fun activeChargeStart(): Long? = pluggedAt?.takeIf { SystemClock.uptimeMillis() - it < CHARGE_MS }
 }

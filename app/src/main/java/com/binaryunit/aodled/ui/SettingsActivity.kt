@@ -66,6 +66,7 @@ class SettingsActivity : AppCompatActivity() {
     private lateinit var statusRows: LinearLayout
     private lateinit var enabledSwitch: MaterialSwitch
     private lateinit var otherProfilesSwitch: MaterialSwitch
+    private lateinit var chargeSwitch: MaterialSwitch
     private lateinit var lightSettings: View
     private lateinit var palette: ChipGroup
     private lateinit var customChip: Chip
@@ -120,6 +121,8 @@ class SettingsActivity : AppCompatActivity() {
             if (on) save(cfg.copy(includeOtherProfiles = true)) else leaveOutOtherProfiles()
         }
 
+        chargeSwitch = findViewById(R.id.charge_animation)
+        chargeSwitch.setOnCheckedChangeListener { _, on -> if (!binding) save(cfg.copy(chargeAnimation = on)) }
         findViewById<View>(R.id.help_status).setOnClickListener { showHelp(it, R.string.help_status) }
         findViewById<View>(R.id.help_other_profiles).setOnClickListener { showHelp(it, R.string.help_other_profiles, above = true) }
         findViewById<View>(R.id.help_filter).setOnClickListener { showHelp(it, R.string.help_filter, above = true) }
@@ -368,6 +371,7 @@ class SettingsActivity : AppCompatActivity() {
         findViewById<MaterialButtonToggleGroup>(R.id.light_off_group).check(lightOffs.getValue(cfg.lightOff))
         findViewById<MaterialButtonToggleGroup>(R.id.dnd_group).check(dndModes.getValue(cfg.respectDnd))
         otherProfilesSwitch.isChecked = cfg.includeOtherProfiles
+        chargeSwitch.isChecked = cfg.chargeAnimation
         findViewById<MaterialButtonToggleGroup>(R.id.filter_group).check(filterModes.getValue(cfg.filterMode))
         palette.visibility = if (cfg.colourMode == ColourMode.FIXED) View.VISIBLE else View.GONE
         val preset = (0 until palette.childCount).map { palette.getChildAt(it) as Chip }

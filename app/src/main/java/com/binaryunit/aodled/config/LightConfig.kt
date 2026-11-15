@@ -32,6 +32,7 @@ data class LightConfig(
     val colourMode: ColourMode = ColourMode.APP,
     val fixedColour: Int = 0xFFFFFFFF.toInt(),
     val lightOff: LightOff = LightOff.ON_DISMISS,
+    val chargeAnimation: Boolean = true,
     val ring: RingPlacement? = null,
     val dot: DotPlacement? = null,
     val cutout: CutoutPlacement? = null,
