@@ -9,3 +9,6 @@ docs/superpowers/
 keystore.properties
 *.jks
 *.keystore
+build-apk.bat
+/adb-apk-installer
+...debug apk.lnk

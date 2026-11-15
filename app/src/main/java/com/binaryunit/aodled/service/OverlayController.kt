@@ -2,6 +2,7 @@ package com.binaryunit.aodled.service
 
 import com.binaryunit.aodled.config.BurnIn
 import com.binaryunit.aodled.config.Offset
+import com.binaryunit.aodled.render.CHARGE_MS
 
 const val LINGER_MS = 100L
 
@@ -45,6 +46,8 @@ class OverlayController(
     }
 
     private val burnIn = Runnable { shift() }
+
+    private val chargeEnd = Runnable { refresh() }
 
     private val frame = object : Runnable {
         override fun run() {
@@ -92,6 +95,13 @@ class OverlayController(
      */
     fun tick() {
         if (shiftArmed && now() - armedAt >= BurnIn.INTERVAL_MS) shift()
+    }
+
+    /** A charger was plugged in: redraws now, and again when the burst ends so the host can clear it. */
+    fun charged() {
+        scheduler.cancel(chargeEnd)
+        scheduler.post(chargeEnd, CHARGE_MS)
+        refresh()
     }
 
     /** The light's next showing is exactly where it was placed, so a new placement can be checked; shifts resume after. */

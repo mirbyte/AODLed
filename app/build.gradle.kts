@@ -5,6 +5,10 @@ plugins {
 }
 
 val appVersion = "0.2"
+// build-apk.bat passes these for side-by-side builds
+val defaultAppId = "com.binaryunit.aodled"
+val appId = findProperty("appId") as String? ?: defaultAppId
+val appLabel = findProperty("appLabel") as String? ?: "AODLed"
 
 // Release signing details live outside git: storeFile, storePassword, keyAlias, keyPassword
 val keystore = rootProject.file("keystore.properties").takeIf { it.exists() }
@@ -25,8 +29,13 @@ android {
     namespace = "com.binaryunit.aodled"
     compileSdk = 35
 
+    buildFeatures {
+        resValues = true
+    }
+
     defaultConfig {
-        applicationId = "com.binaryunit.aodled"
+        applicationId = appId
+        resValue("string", "app_name", appLabel)
         minSdk = 31
         targetSdk = 35
         versionCode = 2
@@ -60,9 +69,9 @@ android {
     }
 }
 
-// APKs come out as AODLed-<version>-<debug|release>.apk
+// APKs come out as AODLed-<version>-<debug|release>.apk, with the package name added when it's not the default
 base {
-    archivesName.set("AODLed-$appVersion")
+    archivesName.set(if (appId == defaultAppId) "AODLed-$appVersion" else "AODLed-$appVersion-$appId")
 }
 
 dependencies {

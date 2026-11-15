@@ -38,6 +38,9 @@ data class LightState(
     val cutoutPath: Path? = null,
     val pulse: Pulse = Pulse(),
     val pulseStart: Long = 0L,
+    // Uptime the charging burst began (null when there's none), and the battery percentage it shows
+    val chargeStart: Long? = null,
+    val chargeLevel: Int? = null,
 )
 
 /** Width of the lit line, which sets the burn-in shift. Without a cutout path, Cutout is drawn as the ring. */
@@ -46,6 +49,9 @@ fun LightState.lineThickness(): Float =
 
 private const val EDGE_COMET_STEPS = 12    // segments of one frame's travel each: 12 of a 60-frame lap is a fifth of the border
 private const val CUTOUT_SAMPLES = 64       // points per contour used to find its leftmost point and winding
+private const val CHARGE_TEXT_RATIO = 0.12f // battery percentage's text size, as a share of the screen width
+private const val CHARGE_RIPPLE_RATIO = 0.125f // ring's final radius, as a share of the screen width
+private const val CHARGE_RING_RATIO = 0.01f // ring's line width, as a share of the screen width
 
 /**
  * One hole's outline, scaled around its own centre ([cx], [cy]); where the snake starts on it (fraction of its
@@ -78,6 +84,7 @@ class LightRenderer {
     private val core = Paint(Paint.ANTI_ALIAS_FLAG)
     private val glow = Paint(Paint.ANTI_ALIAS_FLAG)
     private val pixel = Paint().apply { style = Paint.Style.FILL; isAntiAlias = false }
+    private val label = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.WHITE; textAlign = Paint.Align.CENTER }
     private var glowBlur = -1f
     private var aod = false
     private val rect = RectF()
@@ -94,8 +101,9 @@ class LightRenderer {
 
     fun draw(canvas: Canvas, s: LightState, tMs: Long) {
         canvas.drawColor(Color.BLACK)
-        val colour = s.colour ?: return
         aod = s.aod
+        s.chargeStart?.let { drawCharge(canvas, s, it, tMs) }
+        val colour = s.colour ?: return
         val anim = effectiveAnimation(s.cfg.style, s.cfg.animation)
         val alpha = if (anim == Animation.PULSE) pulseAlpha(maxOf(0L, tMs - s.pulseStart), s.pulse) else 1f
         when (s.cfg.style) {
@@ -144,6 +152,23 @@ class LightRenderer {
         canvas.drawCircle(cx, cy, r, stroke(glowPaint(w), w, withAlpha(colour, glowAlpha(aod))))
         canvas.drawCircle(cx, cy, r, stroke(core, w, colour))
         canvas.restore()
+    }
+
+    /** The battery percentage in the middle, and a ring spreading from the charging port at bottom centre. */
+    private fun drawCharge(canvas: Canvas, s: LightState, start: Long, tMs: Long) {
+        val centreX = canvas.width / 2f
+        s.chargeLevel?.let {
+            val size = canvas.width * CHARGE_TEXT_RATIO
+            label.textSize = size
+            canvas.drawText("$it%", centreX, canvas.height / 2f + size / 3, label)
+        }
+        val progress = ((tMs - start) / CHARGE_MS.toFloat()).coerceIn(0f, 1f)
+        val r = canvas.width * CHARGE_RIPPLE_RATIO * progress
+        val w = canvas.width * CHARGE_RING_RATIO
+        val c = withAlpha(Color.WHITE, 1f - progress)
+        val y = canvas.height.toFloat()
+        canvas.drawCircle(centreX, y, r, stroke(glowPaint(w), w, withAlpha(c, glowAlpha(aod))))
+        canvas.drawCircle(centreX, y, r, stroke(core, w, c))
     }
 
     private fun drawDot(canvas: Canvas, s: LightState, colour: Int) {

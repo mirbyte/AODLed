@@ -66,6 +66,7 @@
     </plurals>
     <string name="other_profiles_off">Leave out</string>
     <string name="setting_light_off">Light off</string>
+    <string name="setting_charge_animation">Charging animation</string>
     <string name="off_dismiss">When dismissed</string>
     <string name="off_unlock">On unlock</string>
     <string name="setting_respect_dnd">Do Not Disturb</string>

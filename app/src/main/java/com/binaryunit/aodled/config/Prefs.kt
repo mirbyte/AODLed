@@ -23,6 +23,7 @@ class Prefs(context: Context) {
             colourMode = enumOr(KEY_COLOUR_MODE, d.colourMode),
             fixedColour = prefs.getInt(KEY_FIXED_COLOUR, d.fixedColour),
             lightOff = enumOr(KEY_LIGHT_OFF, d.lightOff),
+            chargeAnimation = prefs.getBoolean(KEY_CHARGE_ANIMATION, d.chargeAnimation),
             ring = if (prefs.contains(KEY_RING_CX)) RingPlacement(
                 prefs.getFloat(KEY_RING_CX, 0f), prefs.getFloat(KEY_RING_CY, 0f), prefs.getFloat(KEY_RING_R, 0f)
             ) else null,
@@ -55,6 +56,7 @@ class Prefs(context: Context) {
             putString(KEY_COLOUR_MODE, c.colourMode.name)
             putInt(KEY_FIXED_COLOUR, c.fixedColour)
             putString(KEY_LIGHT_OFF, c.lightOff.name)
+            putBoolean(KEY_CHARGE_ANIMATION, c.chargeAnimation)
             if (c.ring != null) {
                 putFloat(KEY_RING_CX, c.ring.cx); putFloat(KEY_RING_CY, c.ring.cy); putFloat(KEY_RING_R, c.ring.radius)
             } else {
@@ -113,6 +115,7 @@ class Prefs(context: Context) {
         const val KEY_COLOUR_MODE = "colour_mode"
         const val KEY_FIXED_COLOUR = "fixed_colour"
         const val KEY_LIGHT_OFF = "light_off"
+        const val KEY_CHARGE_ANIMATION = "charge_animation"
         const val KEY_RING_CX = "ring_cx"
         const val KEY_RING_CY = "ring_cy"
         const val KEY_RING_R = "ring_r"
