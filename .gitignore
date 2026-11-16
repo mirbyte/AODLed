@@ -12,3 +12,5 @@ keystore.properties
 build-apk.bat
 /adb-apk-installer
 ...debug apk.lnk
+TODO.txt
+.cursorignore
