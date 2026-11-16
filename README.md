@@ -35,7 +35,7 @@
   including Private Space apps. Respect Do Not Disturb or ignore it.
 - **Turns itself off:** when you dismiss the notification, or as soon as you unlock.
 - **Drag to place:** a full-screen editor that uses the same drawing code as the always-on display.
-- **Burn-in care:** the light moves a few pixels each time the screen turns off.
+- **Burn-in care:** while the light is on it shifts every 3 minutes, and again each time the screen turns off. Rings and cutouts grow or shrink slightly, dots move a few pixels, and edges move inward.
 - **Private:** no internet permission, no tracking, and notification text is never read.
 
 ## Why
